@@ -11,6 +11,7 @@ DROP TABLE StorageFacilities CASCADE CONSTRAINTS;
 DROP TABLE StorageRows CASCADE CONSTRAINTS;
 DROP TABLE StorageShelves CASCADE CONSTRAINTS;
 DROP TABLE StorageSpaces CASCADE CONSTRAINTS;
+DROP TABLE StorageRooms CASCADE CONSTRAINTS;
 DROP TABLE ProductUnits CASCADE CONSTRAINTS;
 DROP TABLE ShippingBoxes CASCADE CONSTRAINTS;
 DROP TABLE Orders CASCADE CONSTRAINTS;
@@ -55,7 +56,13 @@ CREATE TABLE StorageFacilities (
     facility_geometry SDO_GEOMETRY
 );
 
---TODO maybe add storage rooms to have all different types of geometry
+CREATE TABLE StorageRooms (
+    room_id INTEGER PRIMARY KEY,
+    facility_id INTEGER,
+    room_geometry SDO_GEORASTER,
+    CONSTRAINT FK_Facility FOREIGN KEY (facility_id)
+    REFERENCES StorageFacilities(facility_id)
+);
 
 CREATE TABLE StorageRows (
     row_id INTEGER PRIMARY KEY,
@@ -65,21 +72,12 @@ CREATE TABLE StorageRows (
     REFERENCES StorageFacilities(facility_id)
 );
 
-CREATE TABLE StorageShelves (
-    shelf_id INTEGER PRIMARY KEY,
-    row_id INTEGER,
-    shelf_order INTEGER, --from bottom upwards
-    shelf_geometry SDO_GEOMETRY,
-    CONSTRAINT FK_Row FOREIGN KEY (row_id)
-    REFERENCES StorageRows(row_id)
-);
-
 CREATE TABLE StorageSpaces (
     space_id INTEGER PRIMARY KEY,
-    shelf_id INTEGER,
-    space_geometry SDO_GEOMETRY,
-    CONSTRAINT FK_Shelf FOREIGN KEY (shelf_id)
-    REFERENCES StorageShelves(shelf_id)
+    row_id INTEGER,
+    shelf_order INTEGER, --from bottom upwards
+    CONSTRAINT FK_Row FOREIGN KEY (row_id)
+    REFERENCES StorageRows(row_id)
 );
 
 -- Orders
@@ -155,6 +153,35 @@ INSERT INTO StorageFacilities VALUES (1, 'Facility 1', 'City', 'Street', '42/24'
                                           )
                                       );
 
+-- Storage rooms
+INSERT INTO StorageRooms VALUES (1,1,
+                                 SDO_GEOMETRY(2003, NULL, NULL,
+                                    SDO_ELEM_INFO_ARRAY(1,1003,3),
+                                    SDO_ORDINATE_ARRAY(10,10, 50,60)
+                                    )
+                                );
+
+INSERT INTO StorageRooms VALUES (2,1,
+                                    SDO_GEOMETRY(2003, NULL, NULL,
+                                        SDO_ELEM_INFO_ARRAY(1,1003,1),
+                                        SDO_ORDINATE_ARRAY(30,40, 50,40, 80,90, 10,90, 10,60, 50,60)
+                                        )
+                                 );
+
+INSERT INTO StorageRooms VALUES (3,1,
+                                    SDO_GEOMETRY(2003, NULL, NULL,
+                                        SDO_ELEM_INFO_ARRAY(1,1005,4, 1,2,1, 3,2,2, 8,2,1, 10,2,1),
+                                        SDO_ORDINATE_ARRAY(50,40, 120,40,130,40,120,80, 80,80, 50,40)
+                                        )
+                                 );
+
+INSERT INTO StorageRooms VALUES (4,1,
+                                    SDO_GEOMETRY(2004, NULL, NULL,
+                                        SDO_ELEM_INFO_ARRAY(1,1003,3, 5,2003,4),
+                                        SDO_ORDINATE_ARRAY(50,10, 110,40, 95,20, 100,25, 95,30)
+                                        )
+                                );
+
 -- Storage rows
 INSERT INTO StorageRows VALUES (1, 1,
                                 SDO_GEOMETRY(2003, NULL, NULL,
@@ -163,69 +190,43 @@ INSERT INTO StorageRows VALUES (1, 1,
                                     )
                                );
 
--- Storage shelves
-INSERT INTO StorageShelves VALUES (1, 1, 1,
-                                   SDO_GEOMETRY(2003, NULL, NULL,
-                                        SDO_ELEM_INFO_ARRAY(1,1003,3),
-                                        SDO_ORDINATE_ARRAY(11,11, 19,49)
-                                        )
-                                   );
-
-INSERT INTO StorageShelves VALUES (2, 1, 3,
-                                   SDO_GEOMETRY(2003, NULL, NULL,
-                                        SDO_ELEM_INFO_ARRAY(1,1003,3),
-                                        SDO_ORDINATE_ARRAY(11,11, 19,49)
-                                        )
-                                   );
-
-INSERT INTO StorageShelves VALUES (3, 1, 3,
-                                   SDO_GEOMETRY(2003, NULL, NULL,
-                                        SDO_ELEM_INFO_ARRAY(1,1003,3),
-                                        SDO_ORDINATE_ARRAY(11,11, 19,49)
-                                        )
-                                   );
-
-INSERT INTO StorageShelves VALUES (4, 1, 4,
-                                   SDO_GEOMETRY(2003, NULL, NULL,
-                                        SDO_ELEM_INFO_ARRAY(1,1003,3),
-                                        SDO_ORDINATE_ARRAY(11,11, 19,49)
-                                        )
-                                   );
-
-INSERT INTO StorageShelves VALUES (5, 1, 5,
-                                   SDO_GEOMETRY(2003, NULL, NULL,
-                                        SDO_ELEM_INFO_ARRAY(1,1003,3),
-                                        SDO_ORDINATE_ARRAY(11,11, 19,49)
-                                        )
-                                   );
+INSERT INTO StorageRows VALUES (2,1,
+                                SDO_GEOMETRY(2003, NULL, NULL,
+                                    SDO_ELEM_INFO_ARRAY(1,1003,3),
+                                    SDO_ORDINATE_ARRAY(30,10, 40,50)
+                                    )
+                                );
 
 -- Storage spaces
+-- Row 1 Shelf 1
+INSERT INTO StorageSpaces VALUES (1,1,1);
+INSERT INTO StorageSpaces VALUES (2,1,1);
+INSERT INTO StorageSpaces VALUES (3,1,1);
+INSERT INTO StorageSpaces VALUES (4,1,1);
+-- Row 1 Shelf 2
+INSERT INTO StorageSpaces VALUES (5,1,2);
+INSERT INTO StorageSpaces VALUES (6,1,2);
+INSERT INTO StorageSpaces VALUES (7,1,2);
+INSERT INTO StorageSpaces VALUES (9,1,2);
+-- Row 1 Shelf 3
+INSERT INTO StorageSpaces VALUES (10,1,3);
+INSERT INTO StorageSpaces VALUES (11,1,3);
+INSERT INTO StorageSpaces VALUES (12,1,3);
+INSERT INTO StorageSpaces VALUES (13,1,3);
 
-INSERT INTO StorageSpaces VALUES (1,1,
-                                  SDO_GEOMETRY(2003, NULL, NULL,
-                                        SDO_ELEM_INFO_ARRAY(1,1003,3),
-                                        SDO_ORDINATE_ARRAY(12,12, 18,18)
-                                        )
-                                    );
-
-INSERT INTO StorageSpaces VALUES (2,1,
-                                  SDO_GEOMETRY(2003, NULL, NULL,
-                                        SDO_ELEM_INFO_ARRAY(1,1003,3),
-                                        SDO_ORDINATE_ARRAY(12,22, 18,28)
-                                        )
-                                    );
-
-INSERT INTO StorageSpaces VALUES (3,1,
-                                  SDO_GEOMETRY(2003, NULL, NULL,
-                                        SDO_ELEM_INFO_ARRAY(1,1003,3),
-                                        SDO_ORDINATE_ARRAY(12,32, 18,38)
-                                        )
-                                    );
-
-INSERT INTO StorageSpaces VALUES (4,1,
-                                  SDO_GEOMETRY(2003, NULL, NULL,
-                                        SDO_ELEM_INFO_ARRAY(1,1003,3),
-                                        SDO_ORDINATE_ARRAY(12,42, 18,48)
-                                        )
-                                    );
+-- Row 2 Shelf 1
+INSERT INTO StorageSpaces VALUES (14,2,1);
+INSERT INTO StorageSpaces VALUES (15,2,1);
+INSERT INTO StorageSpaces VALUES (16,2,1);
+INSERT INTO StorageSpaces VALUES (17,2,1);
+-- Row 2 Shelf 2
+INSERT INTO StorageSpaces VALUES (18,2,2);
+INSERT INTO StorageSpaces VALUES (19,2,2);
+INSERT INTO StorageSpaces VALUES (20,2,2);
+INSERT INTO StorageSpaces VALUES (21,2,2);
+-- Row 2 Shelf 3
+INSERT INTO StorageSpaces VALUES (22,2,3);
+INSERT INTO StorageSpaces VALUES (23,2,3);
+INSERT INTO StorageSpaces VALUES (24,2,3);
+INSERT INTO StorageSpaces VALUES (25,2,3);
 
