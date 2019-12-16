@@ -1,0 +1,36 @@
+version: "3"
+
+services:
+    api:
+        build:
+            context: ./backend
+            dockerfile: Dockerfile
+        image: "sveatlo/wmanager-api"
+        volumes:
+            - "./backend:/app"
+        ports:
+            - "1522:8080"
+    ui:
+        build:
+            context: ./frontend
+            dockerfile: Dockerfile
+        image: "sveatlo/wmanager-ui"
+        networks:
+            - default
+            - app
+        volumes:
+            - "./frontend:/app"
+        ports:
+            - "1523:3000"
+    database:
+        image: store/oracle/database-enterprise:12.2.0.1
+        environment: {}
+        networks:
+            - app
+            - default
+        ports:
+            - "1521:1521"
+            - "5500:5500"
+networks:
+    app:
+        internal: true
