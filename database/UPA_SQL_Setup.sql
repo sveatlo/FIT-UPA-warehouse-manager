@@ -56,6 +56,8 @@ CREATE TABLE product_units (
     checked_in DATE,
     checked_out DATE NULL,
     geometry SDO_GEOMETRY,
+    geometry_meta_x binary_double NULL,
+    geometry_meta_y binary_double NULL,
     CONSTRAINT FK_Placement FOREIGN KEY (product_id)
     REFERENCES products(id)
 );
