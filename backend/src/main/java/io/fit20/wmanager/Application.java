@@ -94,6 +94,7 @@ public class Application {
 
         post("/product_units/", productsController.createUnit);
         get("/product_units/", productsController.getUnits);
+        get("/product_units/:id/", productsController.getUnit);
         delete("/product_units/:id/", productsController.deleteUnit);
         get("/product_units/:id/overlapping/", "*/*",  productsController.getOverlappingUnits);
         get("/warehouse/most_used_space/", productsController.getProductUsingMostSpace);

@@ -139,6 +139,19 @@ public class ProductsController extends BaseController {
         return new Ok(productUnit).send(res);
     };
 
+
+    public Route getUnit = (Request req, Response res) -> {
+        int id = Integer.parseInt(req.params(":id"));
+        ProductUnit unit = null;
+        try {
+            unit = this.dao.getUnitByID(id);
+        } catch (NotFoundException e) {
+            return new NotFound().send(res);
+        }
+
+        return new Ok(unit).send(res);
+    };
+
     public Route getUnits = (Request req, Response res) -> {
         int limit = Integer.parseInt(req.queryParamOrDefault("limit", "10"));
         int offset = Integer.parseInt(req.queryParamOrDefault("offset", "0"));

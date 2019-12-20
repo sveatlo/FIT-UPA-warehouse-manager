@@ -308,8 +308,8 @@ public class ProductsDAO {
                 throw sqlException;
             }
         }
-
     }
+
     public ArrayList<Product> getAll() throws SQLException, IOException {
         return this.getAll("id", "asc", 10, 0);
     }
@@ -404,11 +404,11 @@ public class ProductsDAO {
     }
 
     public void createUnit(ProductUnit unit) throws Exception {
-        final String SQL_INSERT_NEW = "BEGIN INSERT INTO product_units(product_id, checked_in, checked_out, geometry) VALUES(?, ?, ?, ?) returning id into ?; END;";
+        final String SQL_INSERT_NEW = "BEGIN INSERT INTO product_units(product_id, checked_in, checked_out, geometry, geometry_meta_x, geometry_meta_y) VALUES(?, ?, ?, ?, ?, ?) returning id into ?; END;";
         try(CallableStatement stmt = connection.prepareCall(SQL_INSERT_NEW)) {
             stmt.setInt(1, unit.productID);
-            stmt.setDate(2, unit.checkIn);
-            stmt.setDate(3, unit.checkOut);
+            stmt.setDate(2, unit.checkedIn);
+            stmt.setDate(3, unit.checkedOut);
 
             if (unit.geometry == null) {
                 throw new Exception("Geometry must be set");
@@ -417,20 +417,23 @@ public class ProductsDAO {
                 stmt.setObject(4, obj);
             }
 
-            stmt.registerOutParameter(5, OracleTypes.INTEGER);
+            stmt.setDouble(5, unit.geometry.x);
+            stmt.setDouble(6, unit.geometry.y);
+
+            stmt.registerOutParameter(7, OracleTypes.INTEGER);
 
             stmt.execute();
-            unit.id = stmt.getInt(5);
+            unit.id = stmt.getInt(7);
         }
     }
 
     public void updateUnit(ProductUnit unit) throws Exception {
-        final String SQL_UPDATE_DATA = "UPDATE product_units SET product_id = ?, checked_in = ?, checked_out = ?, geometry = ? WHERE id = ?";
+        final String SQL_UPDATE_DATA = "UPDATE product_units SET product_id = ?, checked_in = ?, checked_out = ?, geometry = ?, geometry_meta_x = ?, geometry_meta_y = ? WHERE id = ?";
         // insert failed, try update
         try(PreparedStatement stmt = connection.prepareStatement(SQL_UPDATE_DATA)) {
             stmt.setInt(1, unit.productID);
-            stmt.setDate(2, unit.checkIn);
-            stmt.setDate(3, unit.checkOut);
+            stmt.setDate(2, unit.checkedIn);
+            stmt.setDate(3, unit.checkedOut);
 
             if (unit.geometry.toJGeometry() == null) {
                 throw new Exception("Geometry must be set");
@@ -439,7 +442,10 @@ public class ProductsDAO {
                 stmt.setObject(4, obj);
             }
 
-            stmt.setInt(5, unit.id);
+            stmt.setDouble(5, unit.geometry.x);
+            stmt.setDouble(6, unit.geometry.y);
+
+            stmt.setInt(7, unit.id);
 
             stmt.executeUpdate();
         }
@@ -471,8 +477,8 @@ public class ProductsDAO {
                     ProductUnit pu = new ProductUnit();
                     pu.id = resultSet.getInt("id");
                     pu.productID = resultSet.getInt("product_id");
-                    pu.checkIn = resultSet.getDate("checked_in");
-                    pu.checkOut = resultSet.getDate("checked_out");
+                    pu.checkedIn = resultSet.getDate("checked_in");
+                    pu.checkedOut = resultSet.getDate("checked_out");
 
                     products.add(pu);
                 }
@@ -482,9 +488,36 @@ public class ProductsDAO {
         }
     }
 
+    public ProductUnit getUnitByID(int id) throws SQLException, NotFoundException, IOException {
+        final String SQL_SELECT_BY_ID = "SELECT u.id, u.product_id, u.checked_in, u.checked_out, u.geometry, u.geometry_meta_x, u.geometry_meta_y, p.geometry_meta_type, p.geometry_meta_width, p.geometry_meta_height, p.geometry_meta_radius FROM product_units u, products p WHERE u.id = ? AND u.product_id = p.id";
+        try (PreparedStatement stmt = connection.prepareStatement(SQL_SELECT_BY_ID)) {
+            stmt.setInt(1, id);
+
+            try (ResultSet resultSet = stmt.executeQuery()) {
+                if (resultSet.next()) {
+                    ProductUnit pu = new ProductUnit();
+                    pu.id = resultSet.getInt("id");
+                    pu.productID = resultSet.getInt("product_id");
+                    pu.checkedIn = resultSet.getDate("checked_in");
+                    pu.checkedOut = resultSet.getDate("checked_out");
+
+                    pu.geometry.x = resultSet.getDouble("geometry_meta_x");
+                    pu.geometry.y = resultSet.getDouble("geometry_meta_y");
+                    pu.geometry.type = resultSet.getString("geometry_meta_type");
+                    pu.geometry.radius = resultSet.getDouble("geometry_meta_radius");
+                    pu.geometry.width  = resultSet.getDouble("geometry_meta_width");
+                    pu.geometry.height = resultSet.getDouble("geometry_meta_height");
+                    return pu;
+                } else {
+                    throw new NotFoundException();
+                }
+            }
+        }
+    }
+
 
     public double getWarehouseUsedArea() throws SQLException {
-        final String SQL_TOTAL_AREA_USED_BY_UNITS = "SELECT SUM(SDO_GEOM.SDO_AREA(geometry, 1)) total_area FROM product_units";
+        final String SQL_TOTAL_AREA_USED_BY_UNITS = "SELECT SUM(SDO_GEOM.SDO_AREA(u.geometry, 1)) total_area FROM product_units u WHERE u.checked_in <= CURRENT_DATE AND (u.checked_out >= CURRENT_DATE OR u.checked_out IS NULL)";
         try(PreparedStatement stmt = connection.prepareStatement(SQL_TOTAL_AREA_USED_BY_UNITS)) {
             ResultSet rs = stmt.executeQuery();
             rs.next();
@@ -494,7 +527,7 @@ public class ProductsDAO {
 
     public HashMap<String, Object> getProductUsingMostSpace() throws SQLException {
         final String SQL_MOST_SPACED_USING_PRODUCT = "SELECT t1.* FROM (\n" +
-                "    SELECT p.id as product_id, SUM(SDO_GEOM.SDO_AREA(u.geometry, 1)) as area FROM products p, product_units u WHERE p.id = u.product_id GROUP BY p.id ORDER BY area DESC\n" +
+                "    SELECT p.id as product_id, SUM(SDO_GEOM.SDO_AREA(u.geometry, 1)) as area FROM products p, product_units u WHERE p.id = u.product_id AND u.checked_in <= CURRENT_DATE AND (u.checked_out >= CURRENT_DATE OR u.checked_out IS NULL) GROUP BY p.id ORDER BY area DESC\n" +
                 ") t1 WHERE rownum = 1";
 
         try(PreparedStatement stmt = connection.prepareStatement(SQL_MOST_SPACED_USING_PRODUCT)) {
@@ -520,9 +553,6 @@ public class ProductsDAO {
             ArrayList<Integer> ids = new ArrayList<Integer>();
             while (rs.next()) {
                 ids.add(rs.getInt("overlapping_id"));
-            }
-            if (ids.size() == 0) {
-                throw new NotFoundException();
             }
             return ids;
         }

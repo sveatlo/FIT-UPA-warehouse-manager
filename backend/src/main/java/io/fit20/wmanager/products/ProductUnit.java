@@ -16,8 +16,8 @@ import java.sql.Date;
 public class ProductUnit {
     public int id;
     public int productID;
-    public Date checkIn;
-    public Date checkOut;
+    public Date checkedIn;
+    public Date checkedOut;
     public FakeGeometry geometry;
 
     public static ProductUnit fromJSON(String json) throws IOException {
