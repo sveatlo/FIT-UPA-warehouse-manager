@@ -3,6 +3,7 @@ import {
   Datagrid,
   List,
   ReferenceField,
+  DateField,
   Responsive,
   SimpleList,
   TextField

@@ -4,10 +4,14 @@ import {
   List,
   ReferenceField,
   Responsive,
+  DateField,
   SimpleList,
   TextField
 } from "react-admin";
 import Box from "@material-ui/core/Box";
+import Grid from "@material-ui/core/Grid";
+import Card from "@material-ui/core/Card";
+import CardContent from "@material-ui/core/CardContent";
 import { fetchUtils } from "ra-core";
 import config from "../../config";
 
@@ -49,15 +53,24 @@ export const ProductUnitsList = props => {
 
   return (
     <>
-      <Box bgcolor="primary.main">
-        Total area used by stored units: {totalArea}
-      </Box>
-      <Box bgcolor="primary.main">
-        Most space-consuming product: {mostSpaceConsumingProduct}
-        <br />
-        Area consumed {mostSpaceConsumingProductArea}
-      </Box>
-      <Box bgcolor="primary.main">{totalArea}</Box>
+      <Grid container spacing={5}>
+        <Grid item xs={6} sm={4}>
+          <Card>
+            <CardContent>
+              Total area used by stored units: {totalArea.toFixed(2)}
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={6} sm={4}>
+          <Card>
+            <CardContent>
+              Most space-consuming product: {mostSpaceConsumingProduct}
+              <br />
+              Area consumed {mostSpaceConsumingProductArea.toFixed(2)}
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
       <List {...props}>
         <Responsive
           small={<SimpleList primaryText={record => record.name} />}
@@ -71,6 +84,8 @@ export const ProductUnitsList = props => {
               >
                 <TextField source="name" />
               </ReferenceField>
+              <DateField source="checked_in" />
+              <DateField source="checked_out" />
             </Datagrid>
           }
         />

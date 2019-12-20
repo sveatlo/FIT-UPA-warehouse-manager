@@ -36,6 +36,7 @@ const ProductGeometryEditor = ({ productGeometry, ...props }) => {
       >
         <FormDataConsumer>
           {({ formData, ...moreProps }) => {
+            console.log("NOOOO geom", formData.geometry);
             if (formData && !formData.geometry) {
               formData.geometry = {
                 x: 0,
@@ -45,26 +46,27 @@ const ProductGeometryEditor = ({ productGeometry, ...props }) => {
                 height: 10
               };
             }
+            if (productGeometry && productGeometry.type) {
+              formData.geometry.type = productGeometry.type;
+              formData.geometry.radius = productGeometry.radius;
+              formData.geometry.width = productGeometry.width;
+              formData.geometry.height = productGeometry.height;
+            }
             const onUnitDragEng = ({ target }) => {
-              if (!formData.geometry) {
-                formData.geometry = {
-                  x: 0,
-                  y: 0
-                };
-              }
-              formData.geometry.x = target.attrs.x;
-              formData.geometry.y = target.attrs.y;
+              formData.geometry.x = target.attrs.x / 4;
+              formData.geometry.y = target.attrs.y / 4;
             };
-            if (productGeometry && productGeometry.type === "circle") {
+            if (formData.geometry.type === "circle") {
+              console.log("NOOOOO geom circle");
               return (
                 <>
                   <Stage width={400} height={200}>
                     <Layer>
                       <Circle
                         draggable
-                        radius={productGeometry.radius * 4}
-                        x={productGeometry.radius * 4}
-                        y={productGeometry.radius * 4}
+                        radius={formData.geometry.radius * 4}
+                        x={formData.geometry.x * 4}
+                        y={formData.geometry.y * 4}
                         fill="red"
                         onDragEnd={onUnitDragEng}
                       />
@@ -72,20 +74,18 @@ const ProductGeometryEditor = ({ productGeometry, ...props }) => {
                   </Stage>
                 </>
               );
-            } else if (
-              productGeometry &&
-              productGeometry.type === "rectangle"
-            ) {
+            } else if (formData.geometry.type === "rectangle") {
+              console.log("NOOOOO geom rectangle");
               return (
                 <>
                   <Stage width={400} height={200}>
                     <Layer>
                       <Rect
                         draggable
-                        x={0}
-                        y={0}
-                        width={productGeometry.width * 4}
-                        height={productGeometry.height * 4}
+                        x={formData.geometry.x * 4}
+                        y={formData.geometry.y * 4}
+                        width={formData.geometry.width * 4}
+                        height={formData.geometry.height * 4}
                         fill="green"
                         onDragEnd={onUnitDragEng}
                       />
@@ -142,9 +142,49 @@ export const ProductUnitsCreate = props => (
 );
 
 export const ProductUnitsEdit = props => {
+  const [overlappingUnits, setOverlappingUnits] = useState(null);
+
+  const getOverlapppingUnits = id => {
+    fetchUtils
+      .fetchJson(`${config.apiUrl}/product_units/${id}/overlapping/`, {
+        method: "GET"
+      })
+      .then(res => {
+        setOverlappingUnits(res.json.data);
+      })
+      .catch(() => {
+        alert("error");
+      });
+  };
+  if (overlappingUnits === null) {
+    getOverlapppingUnits(props.id);
+  }
+
+  const OverlappingUnitsComponent = ({ ids }) => {
+    if (ids === undefined || ids === null || ids.length === 0) {
+      return <></>;
+    }
+
+    console.log("SUPER NOOOOOOOOOOOOOOOO", ids);
+
+    return (
+      <>
+        <h2>Overlapping units:</h2>
+        <ul>
+          {ids.map(item => {
+            return <li>{item}</li>;
+          })}
+        </ul>
+      </>
+    );
+  };
+
   return (
-    <Edit {...props}>
-      <ProductUnitForm edit {...props} />
-    </Edit>
+    <>
+      <Edit {...props}>
+        <ProductUnitForm edit {...props} />
+      </Edit>
+      <OverlappingUnitsComponent ids={overlappingUnits} />
+    </>
   );
 };

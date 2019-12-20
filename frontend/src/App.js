@@ -4,6 +4,7 @@ import { fetchUtils } from "ra-core";
 
 import config from "./config";
 import restDataProvider from "./dataProvider";
+import fakeAuthProvider from "./authProvider";
 // resources
 import { categories, products, product_units } from "./resources";
 
@@ -17,7 +18,7 @@ const httpClient = (url, options = {}) => {
 const dataProvider = restDataProvider(config.apiUrl, httpClient);
 
 const App = () => (
-  <Admin dataProvider={dataProvider}>
+  <Admin dataProvider={dataProvider} authProvider={fakeAuthProvider}>
     <Resource name="categories" {...categories} />
     <Resource name="products" {...products} />
     <Resource name="product_units" {...product_units} />
