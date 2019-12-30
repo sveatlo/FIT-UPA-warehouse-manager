@@ -193,4 +193,24 @@ public class ProductsController extends BaseController {
         ArrayList<Integer> ids = this.dao.getOverlappingUnits(id);
         return new Ok(ids).send(res);
     };
+
+
+    public Route getClosestNeighbour = (Request req, Response res) -> {
+        int id = Integer.parseInt(req.params(":id"));
+        Integer neighbourId = this.dao.getClosestNeighbour(id);
+        return new Ok(neighbourId).send(res);
+    };
+
+    public Route getRelationsToOthers = (Request req, Response res) -> {
+        int id = Integer.parseInt(req.params(":id"));
+        ArrayList<Tuple<Integer, String>> r = this.dao.getRelationToOthers(id);
+        return new Ok(r).send(res);
+    };
+
+    public Route getNearbySameProduct = (Request req, Response res) ->  {
+        int id = Integer.parseInt(req.params(":id"));
+        double distance = Integer.parseInt(req.params(":distance"));
+        ArrayList<Integer> r = this.dao.getCloseSameProducts(id, distance);
+        return new Ok(r).send(res);
+    };
 }

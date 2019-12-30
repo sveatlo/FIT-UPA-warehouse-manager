@@ -22,7 +22,7 @@ export default (type, params) => {
 
   // called when the user clicks on the logout button
   if (type === AUTH_LOGOUT) {
-    localStorage.removeItem("user");
+    sessionStorage.clear();
     return Promise.resolve();
   }
 
@@ -32,7 +32,7 @@ export default (type, params) => {
 
     if (status === 401) {
       console.log("[auth] rejecting viac auth error");
-      localStorage.removeItem("user");
+      sessionStorage.removeItem("user");
       return Promise.reject();
     }
 

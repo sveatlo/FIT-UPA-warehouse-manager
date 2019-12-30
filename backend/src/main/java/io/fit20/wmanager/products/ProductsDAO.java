@@ -557,4 +557,48 @@ public class ProductsDAO {
             return ids;
         }
     }
+
+    public Integer getClosestNeighbour(int id) throws Exception {
+        final String SQL_GET_CLOSES_NEIGHBOUR = "SELECT u2.id, SDO_GEOM.SDO_DISTANCE(u1.geometry, u2.geometry, 1) distance FROM product_units u1, product_units u2 WHERE u1.id = ? AND u1.id <> u2.id ORDER BY distance ASC FETCH NEXT 1 ROWS ONLY";
+        try (PreparedStatement stmt = connection.prepareStatement(SQL_GET_CLOSES_NEIGHBOUR)) {
+            stmt.setInt(1, id);
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                return rs.getInt("id");
+            }
+            throw new NotFoundException();
+        }
+    }
+
+    public ArrayList<Tuple<Integer, String>> getRelationToOthers(int id) throws Exception {
+        final String SQL_GET_RELATION = "SELECT u1.id, u2.id as theotherid, SDO_GEOM.RELATE(u1.geometry, 'determine', u2.geometry, 0.1) relation FROM product_units u1, product_units u2 WHERE u1.id = ? AND u1.id <> u2.id";
+        try(PreparedStatement stmt = connection.prepareStatement(SQL_GET_RELATION)) {
+            stmt.setInt(1, id);
+
+            ResultSet rs = stmt.executeQuery();
+            ArrayList<Tuple<Integer, String>> res = new ArrayList<Tuple<Integer, String>>();
+            while(rs.next()) {
+                res.add(new Tuple<Integer, String>(rs.getInt("theotherid"), rs.getString("relation")));
+            }
+
+            return res;
+        }
+    }
+
+    public ArrayList<Integer> getCloseSameProducts(int id, double distance) throws  Exception {
+        final String SQL_GET_CLOSE_SAME_PRODUCTS = "SELECT u1.id, u2.id as theotherid FROM product_units u1, product_units u2, user_sdo_geom_metadata m WHERE u1.id = ? AND u1.id <> u2.id AND m.table_name = 'PRODUCT_UNITS' AND m.column_name = 'GEOMETRY' AND SDO_GEOM.WITHIN_DISTANCE(u1.geometry, ?, u2.geometry) = 'TRUE'";
+        try (PreparedStatement stmt = connection.prepareStatement(SQL_GET_CLOSE_SAME_PRODUCTS)) {
+            stmt.setInt(1, id);
+            stmt.setDouble(2, distance);
+
+            ResultSet rs = stmt.executeQuery();
+            ArrayList<Integer> arr = new ArrayList<Integer>();
+            while(rs.next()) {
+                arr.add(rs.getInt("theotherid"));
+            }
+
+            return arr;
+        }
+    }
 }

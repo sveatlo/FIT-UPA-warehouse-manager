@@ -87,6 +87,7 @@ public class Application {
         get("/products/:id/", productsController.getProduct);
         get("/products/:id/footprint/", productsController.getProductFootprint);
         get("/products/:id/image/", productsController.getProductImage);
+        get("/products/:id/similar_image/", productsController.getBySimilarImage);
         post("/products/:id/image/rotate/:angle/", productsController.rotateProductImage);
         get("/products/:id/similar/", productsController.getSimilarProducts);
         delete("/products/:id/", productsController.deleteProduct);
@@ -97,6 +98,9 @@ public class Application {
         get("/product_units/:id/", productsController.getUnit);
         delete("/product_units/:id/", productsController.deleteUnit);
         get("/product_units/:id/overlapping/", "*/*",  productsController.getOverlappingUnits);
+        get("/product_units/:id/closest_neighbour/", "*/*",  productsController.getClosestNeighbour);
+        get("/product_units/:id/relations/", "*/*",  productsController.getRelationsToOthers);
+        get("/product_units/:id/nearby_same_product/:distance/", "*/*",  productsController.getNearbySameProduct);
         get("/warehouse/most_used_space/", productsController.getProductUsingMostSpace);
 //        get("/warehouse/image", productsController.getWarehouseMap);
         get("/warehouse/total_used_area/", productsController.getWarehouseUsedArea);

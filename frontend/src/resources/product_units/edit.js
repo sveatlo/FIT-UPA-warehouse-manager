@@ -143,6 +143,7 @@ export const ProductUnitsCreate = props => (
 
 export const ProductUnitsEdit = props => {
   const [overlappingUnits, setOverlappingUnits] = useState(null);
+  const [spatialRelations, setSpatialRelations] = useState(null);
 
   const getOverlapppingUnits = id => {
     fetchUtils
@@ -156,8 +157,23 @@ export const ProductUnitsEdit = props => {
         alert("error");
       });
   };
+  const getSpatialRelations = id => {
+    fetchUtils
+      .fetchJson(`${config.apiUrl}/product_units/${id}/relations/`, {
+        method: "GET"
+      })
+      .then(res => {
+        setSpatialRelations(res.json.data);
+      })
+      .catch(() => {
+        alert("error");
+      });
+  };
   if (overlappingUnits === null) {
     getOverlapppingUnits(props.id);
+  }
+  if (spatialRelations === null) {
+    getSpatialRelations(props.id);
   }
 
   const OverlappingUnitsComponent = ({ ids }) => {
@@ -179,12 +195,90 @@ export const ProductUnitsEdit = props => {
     );
   };
 
+  const SpatialRelationsComponent = ({ data }) => {
+    if (!data) {
+      return <></>;
+    }
+
+    return (
+      <>
+        <h2>Relation to other units</h2>
+        <ul>
+          {data.map(item => {
+            return (
+              <li>
+                {item["1"]} - {item["2"]}
+              </li>
+            );
+          })}
+        </ul>
+      </>
+    );
+  };
+
+  const NearbySameProducts = ({ id }) => {
+    const [distance, setDistance] = useState(10);
+    const [nearbyUnits, setNearbyUnits] = useState(null);
+
+    const getNearbyProducts = id => {
+      fetchUtils
+        .fetchJson(
+          `${config.apiUrl}/product_units/${id}/nearby_same_product/${distance}`,
+          {
+            method: "GET"
+          }
+        )
+        .then(res => {
+          setNearbyUnits(res.json.data);
+        })
+        .catch(() => {
+          alert("error");
+        });
+    };
+    if (nearbyUnits === null) {
+      getNearbyProducts(id);
+    }
+
+    return (
+      <>
+        <h2>Near-by units of the same product</h2>
+        Search distance:{" "}
+        <input
+          id="distance_input"
+          number
+          onChange={d => {
+            const v = parseFloat(
+              document.getElementById("distance_input").value
+            );
+            console.log("NOOOOOOOOOOOOOOOO", v);
+            setDistance(v);
+            getNearbyProducts(id);
+          }}
+        />
+        <ul>
+          {nearbyUnits &&
+            nearbyUnits.map(item => {
+              return <li>{item}</li>;
+            })}
+        </ul>
+      </>
+    );
+  };
+
   return (
     <>
       <Edit {...props}>
-        <ProductUnitForm edit {...props} />
+        <Grid container spacing={3}>
+          <Grid item>
+            <ProductUnitForm edit {...props} />
+          </Grid>
+          <Grid item>
+            <OverlappingUnitsComponent ids={overlappingUnits} />
+            <SpatialRelationsComponent data={spatialRelations} />
+            <NearbySameProducts id={props.id} />
+          </Grid>
+        </Grid>
       </Edit>
-      <OverlappingUnitsComponent ids={overlappingUnits} />
     </>
   );
 };
